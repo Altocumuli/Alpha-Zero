@@ -1,4 +1,4 @@
-# Homework1：UCT MCTS
+<!-- # Homework1：UCT MCTS
 
 ## 快速开始
 
@@ -126,4 +126,210 @@ $$
 ### 特别提醒
 
 **训练脚本启动时，默认会覆盖同一保存路径下的`best.pth.tar`！请注意备份，或确保没有使用已经存在的路径作为输出路径。**
+ -->
+
+# AlphaZero围棋AI实现
+
+## 项目概述
+
+本项目是一个基于AlphaZero算法的围棋AI实现，结合了蒙特卡洛树搜索(MCTS)和深度学习技术。通过自我对弈和强化学习，AI能够逐步提升围棋水平。项目支持多种棋盘游戏环境（围棋、五子棋、井字棋），并提供了完整的训练、评估和可视化框架。
+
+## 核心特性
+
+- **多种游戏环境支持**：围棋(Go)、五子棋(Gobang)、井字棋(TicTacToe)
+- **先进的MCTS算法**：实现了UCT和PUCT变体的蒙特卡洛树搜索
+- **深度学习模型**：提供线性模型、MLP网络和自定义残差网络实现
+- **并行训练框架**：支持多进程并行训练，提高训练效率
+- **完善的评估系统**：对战评估、ELO评分和性能可视化
+- **模型可视化工具**：支持ONNX格式的神经网络结构可视化
+
+## 快速开始
+
+### 环境准备
+
+推荐在Linux系统上运行，但MacOS和Windows也可以完成。确保系统已安装C编译器(GCC/Clang)，然后执行：
+
+```bash
+pip install -r requirements.txt
+```
+
+### 编译游戏环境
+
+分别为围棋、五子棋和井字棋编译环境：
+
+```bash
+cd env/go/
+python setup.py build_ext --inplace
+cd ../gobang/
+python setup.py build_ext --inplace
+cd ../tictactoe/
+python setup.py build_ext --inplace
+```
+
+或直接执行 `compile_all_env.sh` 脚本编译所有环境。
+
+### 运行对局测试
+
+测试两个AI模型对局：
+
+```bash
+python -m pit_puct_mcts
+```
+
+可以修改 `pit_puct_mcts.py` 中的参数来配置不同的模型、游戏环境和对局次数。
+
+### 训练模型
+
+单进程训练（推荐用于调试）：
+
+```bash
+python -m alphazero
+```
+
+多进程并行训练（推荐用于生产环境）：
+
+```bash
+python -m alphazero_parallel
+```
+
+## 项目架构
+
+### 核心模块
+
+- **环境模块** (`env/`): 
+  - 游戏规则和状态管理
+  - 棋盘表示和动作空间定义
+  - 提供统一的交互接口
+
+- **MCTS模块** (`mcts/`):
+  - UCT变体实现
+  - PUCT变体实现（AlphaZero算法核心）
+  - 树搜索节点管理
+
+- **模型模块** (`model/`):
+  - 线性模型 (`linear_model.py`)
+  - MLP网络 (`example_net.py:MLPNet`)
+  - 自定义残差网络 (`example_net.py:MyNet`)
+
+- **训练模块**:
+  - 单进程训练 (`alphazero.py`)
+  - 多进程训练 (`alphazero_parallel.py`)
+  - 参数管理和检查点保存
+
+- **评估模块**:
+  - 模型对战 (`pit_puct_mcts.py`)
+  - 胜率统计和可视化 (`rate*.py`)
+  - 模型结构可视化 (`utils/model_visualizer_onnx.py`)
+
+### 数据流程
+
+1. **环境初始化** → **MCTS自我对弈** → **收集训练数据**
+2. **数据增广** → **模型训练** → **模型评估**
+3. **模型保存** → **重复流程**
+
+## 模型详情
+
+### 线性模型
+
+简单的线性层模型，适用于基础功能验证和基准测试。
+
+### MLP网络
+
+多层感知器网络，包含多个全连接层，能够处理中等复杂度的围棋局面。
+
+### 自定义残差网络 (MyNet)
+
+专为围棋设计的深度残差网络，架构包括：
+- 初始卷积层，将输入转换为特征图
+- 3个残差块，每个残差块包含两个卷积层和批归一化
+- 双头输出:
+  - 策略头: 预测下一步最佳落子位置的概率分布
+  - 价值头: 评估当前局面的胜率
+
+## MCTS实现细节
+
+### UCT-MCTS
+
+传统的UCT算法实现，使用UCB公式选择节点，结合rollout评估叶节点价值。
+
+### PUCT-MCTS
+
+AlphaZero使用的改进版本，主要特点：
+- 使用PUCB公式替代UCB公式进行节点选择
+- 使用神经网络直接评估叶节点价值，而非rollout
+- 结合先验策略概率指导搜索
+
+## 训练流程
+
+AlphaZero训练流程概述：
+1. PUCT-MCTS自我博弈，收集训练数据
+2. 提取搜索过程中得到的(observation, policy, reward)数据
+3. 对策略和价值网络进行联合训练
+4. 新模型与旧模型对战评估，胜率超过阈值则保留
+5. 评估新模型对基线方法的表现，记录胜率
+6. 循环以上步骤
+
+## 性能评估
+
+训练结束后，系统会：
+- 将所有checkpoint进行互相对弈
+- 与baseline方法（如Random Player）对弈
+- 计算ELO分数并绘制学习曲线
+- 生成胜率统计和可视化结果
+
+## 高级功能
+
+### 模型可视化
+
+使用ONNX格式可视化网络结构：
+
+```bash
+python -m utils.model_visualizer_onnx
+```
+
+### 性能分析
+
+生成胜率和学习曲线：
+
+```bash
+python -m rate_current
+python -m rate
+python -m rate_mynet
+```
+
+## 注意事项
+
+- 训练脚本默认会覆盖同一保存路径下的`best.pth.tar`，请注意备份
+- 使用深度模型时建议启用GPU加速，否则训练时间可能很长
+- 对于围棋环境，可以选择使用手工特征(`obs_mode="extra_feature"`)或纯棋盘特征
+
+## 扩展与定制
+
+1. **自定义网络模型**：扩展`model/example_net.py`中的模型实现
+2. **调整训练参数**：修改`AlphaZeroConfig`中的参数设置
+3. **添加新环境**：按照`BaseGame`接口实现新的游戏环境
+
+## 性能建议
+
+- 对于7x7围棋，推荐配置：
+  - n_search=240（单步搜索次数）
+  - n_train_iter=30（训练迭代次数）
+  - 模型结构：3层残差网络或256-128节点的MLP
+- 使用GPU可显著加速训练过程（约5-10倍速度提升）
+
+## 项目路线图
+
+- [x] 基础MCTS实现
+- [x] AlphaZero算法框架
+- [x] 多种神经网络模型
+- [x] 并行训练支持
+- [x] 性能评估和可视化
+- [x] 模型结构可视化
+- [ ] 更大规模围棋支持（9x9, 19x19）
+- [ ] 更复杂的网络架构
+- [ ] 自适应搜索参数
+
+---
+
+项目基于[AlphaZero论文](https://www.science.org/doi/10.1126/science.aar6404)实现，旨在提供一个完整、高效、可扩展的围棋AI训练框架。
 
