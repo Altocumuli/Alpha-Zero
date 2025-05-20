@@ -1,0 +1,114 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>MyNet 模型分析</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .container { max-width: 1000px; margin: 0 auto; }
+            .card { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h1, h2 { color: #333; }
+            .chart { height: 300px; margin-top: 20px; }
+            pre { background: #eee; padding: 10px; border-radius: 4px; overflow-x: auto; }
+            .button { background: #4CAF50; border: none; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>MyNet 模型分析</h1>
+            
+            <div class="card">
+                <h2>模型概览</h2>
+                <p><strong>模型名称:</strong> MyNet</p>
+                <p><strong>棋盘大小:</strong> 7x7</p>
+                <p><strong>节点数量:</strong> 50</p>
+                <p><strong>输入:</strong></p>
+                <pre>[
+  {
+    "name": "input",
+    "shape": [
+      0,
+      7,
+      7
+    ]
+  }
+]</pre>
+                <p><strong>输出:</strong></p>
+                <pre>[
+  {
+    "name": "policy",
+    "shape": [
+      0,
+      50
+    ]
+  },
+  {
+    "name": "value",
+    "shape": [
+      0,
+      1
+    ]
+  }
+]</pre>
+                
+                <a href="model_visualization\mynet_model.onnx" download class="button">下载ONNX模型</a>
+                <a href="model_analysis.json" download class="button">下载模型分析JSON</a>
+            </div>
+            
+            <div class="card">
+                <h2>模型架构</h2>
+                <p>MyNet是一个基于残差网络设计的深度神经网络模型，专为围棋游戏设计。它包含:</p>
+                <ul>
+                    <li>初始卷积层，将输入转换为特征图</li>
+                    <li>3个残差块，每个残差块包含两个卷积层和批归一化</li>
+                    <li>双头输出:
+                        <ul>
+                            <li>策略头: 预测下一步最佳落子位置的概率分布</li>
+                            <li>价值头: 评估当前局面的胜率</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h2>操作类型分布</h2>
+                <div class="chart">
+                    <canvas id="operationsChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>使用Netron查看交互式模型图</h2>
+                <p>Netron是一个专门用于可视化神经网络模型的工具。使用以下命令查看:</p>
+                <pre>pip install netron
+python -m netron model_visualization\mynet_model.onnx</pre>
+                <p>或者访问 <a href="https://netron.app" target="_blank">https://netron.app</a> 并上传ONNX模型文件。</p>
+            </div>
+        </div>
+        
+        <script>
+            // 绘制操作类型图表
+            const ctx = document.getElementById('operationsChart').getContext('2d');
+            const operationsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Shape', 'Constant', 'Gather', 'Unsqueeze', 'Concat', 'Reshape', 'Conv', 'Relu', 'Add', 'Gemm', 'LogSoftmax', 'Tanh'],
+                    datasets: [{
+                        label: '操作类型数量',
+                        data: [3, 8, 3, 3, 3, 3, 9, 10, 3, 3, 1, 1],
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

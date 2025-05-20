@@ -1,0 +1,45 @@
+{
+    "model_name": "MyNet",
+    "board_size": "7x7",
+    "nodes_count": 50,
+    "inputs": [
+        {
+            "name": "input",
+            "shape": [
+                0,
+                7,
+                7
+            ]
+        }
+    ],
+    "outputs": [
+        {
+            "name": "policy",
+            "shape": [
+                0,
+                50
+            ]
+        },
+        {
+            "name": "value",
+            "shape": [
+                0,
+                1
+            ]
+        }
+    ],
+    "operations": {
+        "Shape": 3,
+        "Constant": 8,
+        "Gather": 3,
+        "Unsqueeze": 3,
+        "Concat": 3,
+        "Reshape": 3,
+        "Conv": 9,
+        "Relu": 10,
+        "Add": 3,
+        "Gemm": 3,
+        "LogSoftmax": 1,
+        "Tanh": 1
+    }
+}
