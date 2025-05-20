@@ -248,6 +248,8 @@ python -m alphazero_parallel
 
 ![MyNet模型结构图](model_visualization/model_visualization_mynet_model.onnx.png)
 
+*MyNet残差网络架构图，展示了从输入层到双头输出的完整流程*
+
 ## MCTS实现细节
 
 ### UCT-MCTS
