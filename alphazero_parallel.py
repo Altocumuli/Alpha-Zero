@@ -134,79 +134,79 @@ def execute_episode_worker(
                         episode_step = 0
                         train_examples = []
                         
-                        while True:
-                            player = env.current_player
-                            # MCTS self-play
-                            ########################
-                            # TODO: your code here #
-                            # 使用 MCTS 计算策略
-                            policy = mcts.search()  
-
-                            # 将状态转换为标准形式（黑方视角）
-                            canonical_state = env.compute_canonical_form_obs(state, player)
-
-                            # 存储 (canonical_state, policy, player)
-                            episode_data.append((canonical_state, policy, player))
-
-                            # 根据策略采样动作
-                            action = np.random.choice(len(policy), p=policy)
-
-                            # 执行动作，更新状态
-                            next_state, reward, done = env.step(action)
-
-                            if done:
-                                final_reward = reward  # 最终游戏结果
-                                break
-                            
-                            # 更新 MCTS 树
-                            mcts = mcts.get_subtree(action)
-                            if mcts is None:
-                                mcts = puct_mcts.PUCTMCTS(env, root_env.net, config)
-                            state = next_state
-
-                        # 为每一步分配最终奖励，调整为当前玩家的视角
-                        train_examples = []
-                        for canonical_state, policy, player in episode_data:
-                            # 如果 player == 1 (黑方)，奖励不变；如果 player == -1 (白方)，奖励取反
-                            adjusted_reward = final_reward if player == 1 else -final_reward
-                            train_examples.append((canonical_state, policy, adjusted_reward))
-
-                        # 数据增广：对每一步的状态和策略应用对称变换
-                        augmented_examples = []
-                        for obs, pi, r in train_examples:
-                            symmetries = get_symmetries(obs, pi)  # 生成旋转和翻转的数据
-                            augmented_examples += [(sym_obs, sym_pi, r) for sym_obs, sym_pi in symmetries]
-                        
-                        all_examples += augmented_examples
-
                         # while True:
                         #     player = env.current_player
                         #     # MCTS self-play
                         #     ########################
                         #     # TODO: your code here #
-                        #     policy = mcts.search() # compute policy with mcts
-                            
-                        #     symmetries = get_symmetries(state, policy) # rotate&flip the data&policy
-                        #     train_examples += [(x[0], x[1], player) for x in symmetries]
-                            
-                        #     action = np.random.choice(len(policy), p=policy) # choose a action accroding to policy
-                        #     state, reward, done = env.step(action) # apply the action to env
+                        #     # 使用 MCTS 计算策略
+                        #     policy = mcts.search()  
+
+                        #     # 将状态转换为标准形式（黑方视角）
+                        #     canonical_state = env.compute_canonical_form_obs(state, player)
+
+                        #     # 存储 (canonical_state, policy, player)
+                        #     episode_data.append((canonical_state, policy, player))
+
+                        #     # 根据策略采样动作
+                        #     action = np.random.choice(len(policy), p=policy)
+
+                        #     # 执行动作，更新状态
+                        #     next_state, reward, done = env.step(action)
+
                         #     if done:
-                        #         # record all data
-                        #         # tips: use env.compute_canonical_form_obs to transform the observation into BLACK's perspective
-                        #         current_player = env.current_player
-                        #         for i, (obs, policy, player) in enumerate(train_examples):
-                        #             canonical_obs = env.compute_canonical_form_obs(obs, player)
-                        #             value = reward if current_player == player else -reward
-                        #             train_examples[i] = (canonical_obs, policy, value)
+                        #         final_reward = reward  # 最终游戏结果
                         #         break
                             
-                        #     mcts = mcts.get_subtree(action) # update mcts (you can use get_subtree())
+                        #     # 更新 MCTS 树
+                        #     mcts = mcts.get_subtree(action)
                         #     if mcts is None:
-                        #         mcts = puct_mcts.PUCTMCTS(env, root_env.net, config) # create a new mcts instance if the subtree is None
-                        #     ########################
+                        #         mcts = puct_mcts.PUCTMCTS(env, root_env.net, config)
+                        #     state = next_state
 
-                        # all_examples += train_examples
+                        # # 为每一步分配最终奖励，调整为当前玩家的视角
+                        # train_examples = []
+                        # for canonical_state, policy, player in episode_data:
+                        #     # 如果 player == 1 (黑方)，奖励不变；如果 player == -1 (白方)，奖励取反
+                        #     adjusted_reward = final_reward if player == 1 else -final_reward
+                        #     train_examples.append((canonical_state, policy, adjusted_reward))
+
+                        # # 数据增广：对每一步的状态和策略应用对称变换
+                        # augmented_examples = []
+                        # for obs, pi, r in train_examples:
+                        #     symmetries = get_symmetries(obs, pi)  # 生成旋转和翻转的数据
+                        #     augmented_examples += [(sym_obs, sym_pi, r) for sym_obs, sym_pi in symmetries]
+                        
+                        # all_examples += augmented_examples
+
+                        while True:
+                            player = env.current_player
+                            # MCTS self-play
+                            ########################
+                            # TODO: your code here #
+                            policy = mcts.search() # compute policy with mcts
+                            
+                            symmetries = get_symmetries(state, policy) # rotate&flip the data&policy
+                            train_examples += [(x[0], x[1], player) for x in symmetries]
+                            
+                            action = np.random.choice(len(policy), p=policy) # choose a action accroding to policy
+                            state, reward, done = env.step(action) # apply the action to env
+                            if done:
+                                # record all data
+                                # tips: use env.compute_canonical_form_obs to transform the observation into BLACK's perspective
+                                current_player = env.current_player
+                                for i, (obs, policy, player) in enumerate(train_examples):
+                                    canonical_obs = env.compute_canonical_form_obs(obs, player)
+                                    value = reward if current_player == player else -reward
+                                    train_examples[i] = (canonical_obs, policy, value)
+                                break
+                            
+                            mcts = mcts.get_subtree(action) # update mcts (you can use get_subtree())
+                            if mcts is None:
+                                mcts = puct_mcts.PUCTMCTS(env, root_env.net, config) # create a new mcts instance if the subtree is None
+                            ########################
+
+                        all_examples += train_examples
 
                     logger.debug(f"[Worker {id}] Finished {int(args)} episodes (length={all_episode_len}) in {time.time()-st0:.3f}s, {result_counter}")
                     conn.send((all_examples, result_counter))
@@ -486,7 +486,8 @@ if __name__ == "__main__":
         n_search=240, 
         temperature=1.0, 
         C=1.0,
-        checkpoint_path="checkpoint/mlp_7x7_3layers_exfeat_1"
+        # checkpoint_path="checkpoint/mlp_7x7_3layers_exfeat_1"
+        checkpoint_path="checkpoint/my_net_7x7_3layers_exfeat_1"
     )
     model_training_config = ModelTrainingConfig(
         epochs=10,
@@ -521,7 +522,15 @@ if __name__ == "__main__":
     
     assert config.n_match_update % 2 == 0
     assert config.n_match_eval % 2 == 0
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # 强制启用CUDA并设置设备
+    if torch.cuda.is_available():
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        device = 'cuda'
+        logger.info(f"🚀 CUDA可用! 使用GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        device = 'cpu'
+        logger.info("⚠️ CUDA不可用，使用CPU训练（速度会很慢）")
     
     # env = GoGame(7, obs_mode="extra_feature") # "extra_feature" only compatible with NumpyLinearModel, LinearModel, MLPNet
     env = GoGame(7)
@@ -536,8 +545,8 @@ if __name__ == "__main__":
     
     def net_builder(device=device):
         # Deep Neural Network
-        # net = MyNet(env.observation_size, env.action_space_size, model_config, device=device)
-        net = MLPNet(env.observation_size, env.action_space_size, model_config, device=device)
+        net = MyNet(env.observation_size, env.action_space_size, model_config, device=device)
+        # net = MLPNet(env.observation_size, env.action_space_size, model_config, device=device)
         net = ModelTrainer(env.observation_size, env.action_space_size, net, model_training_config)
         
         # Numpy Linear Model
