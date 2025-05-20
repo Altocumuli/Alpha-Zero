@@ -246,6 +246,8 @@ python -m alphazero_parallel
   - 策略头: 预测下一步最佳落子位置的概率分布
   - 价值头: 评估当前局面的胜率
 
+![MyNet模型结构图](model_visualization/model_visualization_mynet_model.onnx.png)
+
 ## MCTS实现细节
 
 ### UCT-MCTS
